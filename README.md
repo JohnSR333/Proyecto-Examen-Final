@@ -54,7 +54,8 @@ Desde `productService.js` se leen los datos como si fueran respuestas de una API
 
 Ejemplo de uso:
 ```js
-import products from "@/assets/usuarios.json";
+import products from "@/assets/usuarios.json"
+```
 
 
 ## Comunicación entre componentes
