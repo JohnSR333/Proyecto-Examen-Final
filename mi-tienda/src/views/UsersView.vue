@@ -12,9 +12,9 @@
 </template>
 
 <script>
-import SidebarComponent from '../components/SidebarComponent.vue'
-import NavbarComponent from '../components/NavbarComponent.vue'
-import FooterComponent from '../components/FooterComponent.vue'
+import SidebarComponent from '../components/UserModal.vue'
+import NavbarComponent from '../components/Navbar.vue'
+import FooterComponent from '../components/DeleteModal.vue'
 
 export default {
   components: { SidebarComponent, NavbarComponent, FooterComponent }
