@@ -1,35 +1,49 @@
 <template>
-  <div class="d-flex justify-content-center align-items-center vh-100 bg-light">
-    <div class="card p-4 shadow" style="width: 400px; border-radius: 15px; background: linear-gradient(135deg, #FF6B6B, #FFD93D);">
-      <h3 class="text-center text-white mb-4">Iniciar Sesión</h3>
-      <input v-model="usuario" type="text" class="form-control mb-3" placeholder="Usuario">
-      <input v-model="clave" type="password" class="form-control mb-3" placeholder="Contraseña">
-      <button @click="login" class="btn btn-dark w-100">Ingresar</button>
-      <div v-if="error" class="alert alert-danger mt-3">{{ error }}</div>
+  <div class="login-container d-flex justify-content-center align-items-center vh-100">
+    <div class="login-card p-4 shadow">
+
+      <h3 class="text-center mb-4 text-white">Iniciar Sesión</h3>
+
+      <input v-model="email" type="email" class="form-control mb-3" placeholder="Correo electrónico">
+      <input v-model="password" type="password" class="form-control mb-3" placeholder="Contraseña">
+
+      <button class="btn btn-dark w-100" @click="ingresar">Ingresar</button>
+
+      <div v-if="error" class="alert alert-danger mt-3 text-center">
+        Usuario o contraseña incorrectos
+      </div>
+
     </div>
   </div>
 </template>
 
 <script>
-import usuarios from '../assets/usuarios.json'
+import { login } from "../services/authService";
 
 export default {
   data() {
-    return {
-      usuario: '',
-      clave: '',
-      error: ''
-    }
+    return { email: "", password: "", error: false };
   },
   methods: {
-    login() {
-      const user = usuarios.find(u => u.usuario === this.usuario && u.clave === this.clave)
-      if(user) {
-        this.$router.push('/dashboard/productos')
-      } else {
-        this.error = 'Usuario o contraseña incorrectos'
+    async ingresar() {
+      const user = await login(this.email, this.password);
+
+      if (!user) {
+        this.error = true;
+        return;
       }
+
+      this.$router.push("/productos");
     }
   }
-}
+};
 </script>
+
+<style scoped>
+.login-container { background: #f5f5f5; }
+.login-card {
+  width: 400px;
+  border-radius: 15px;
+  background: linear-gradient(to bottom right, #ff6a6a, #fcd34d);
+}
+</style>
