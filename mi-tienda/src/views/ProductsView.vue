@@ -1,147 +1,95 @@
 <template>
-  <div class="container mt-4">
-    <h2 class="text-primary mb-4 text-center">Gestión de Productos Electrónicos</h2>
+  <Navbar />
 
-    <!-- Formulario para agregar producto -->
-    <div class="card p-4 mb-5 shadow-sm">
-      <h5 class="mb-3">Agregar nuevo producto</h5>
+  <div class="container mt-4">
+    <h2 class="text-center mb-4 text-primary">Gestión de Productos Electrónicos</h2>
+
+    <div class="card p-3 mb-4 shadow-sm">
       <div class="row g-3">
-        <div class="col-md-4">
-          <input
-            v-model="newProduct.title"
-            type="text"
-            placeholder="Nombre del producto"
-            class="form-control"
-          />
+        <div class="col-md-3">
+          <input v-model="newProduct.name" class="form-control" placeholder="Nombre del producto">
+        </div>
+        <div class="col-md-2">
+          <input v-model="newProduct.price" class="form-control" placeholder="Precio">
         </div>
         <div class="col-md-3">
-          <input
-            v-model.number="newProduct.price"
-            type="number"
-            placeholder="Precio"
-            class="form-control"
-          />
+          <input v-model="newProduct.image" class="form-control" placeholder="URL imagen">
         </div>
-        <div class="col-md-5">
-          <input
-            v-model="newProduct.image"
-            type="text"
-            placeholder="URL de la imagen"
-            class="form-control"
-          />
+        <div class="col-md-2">
+          <input v-model="newProduct.category" class="form-control" placeholder="Categoría">
         </div>
-        <div class="col-12 text-end">
-          <button @click="addNewProduct" class="btn btn-success mt-2">
-            Agregar producto
-          </button>
+        <div class="col-md-2">
+          <button class="btn btn-success w-100" @click="crear">Agregar</button>
         </div>
       </div>
+      <textarea v-model="newProduct.description" class="form-control mt-3" placeholder="Descripción"></textarea>
     </div>
 
-    <!-- Listado de productos -->
     <div class="row">
-      <div
-        v-for="product in products"
-        :key="product.id"
-        class="col-md-4 mb-4 d-flex align-items-stretch"
-      >
-        <div class="card shadow-sm w-100">
-          <img
-            :src="product.image"
-            class="card-img-top"
-            alt="Imagen del producto"
-            style="height: 250px; object-fit: contain"
-          />
-          <div class="card-body text-center">
-            <h6 class="card-title">{{ product.title }}</h6>
-            <p class="text-success fw-bold">
-              ${{ product.price.toLocaleString('es-CO') }}
-            </p>
-            <div class="d-flex justify-content-center gap-2">
-              <button @click="editProduct(product)" class="btn btn-primary btn-sm">
-                Editar
-              </button>
-              <button @click="deleteProduct(product)" class="btn btn-danger btn-sm">
-                Eliminar
-              </button>
-            </div>
+      <div class="col-md-4 mb-4" v-for="p in products" :key="p.id">
+        <div class="card shadow-sm">
+          <img :src="p.image" class="card-img-top" height="200" style="object-fit: contain">
+          <div class="card-body">
+            <h5 class="card-title">{{ p.name }}</h5>
+            <p class="text-success fw-bold">${{ p.price }}</p>
+
+            <button class="btn btn-primary me-2" @click="editar(p)"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-danger" @click="eliminar(p)"><i class="bi bi-trash"></i></button>
           </div>
         </div>
       </div>
     </div>
+
+    <ProductModal ref="modal" @save="guardarEdicion" />
+    <DeleteModal ref="deleteModal" @confirm="confirmarEliminacion" />
+
   </div>
 </template>
 
 <script>
-import { getProducts, addProduct } from '../services/productService'
+import Navbar from "../components/Navbar.vue";
+import ProductModal from "../components/ProductModal.vue";
+import DeleteModal from "../components/DeleteModal.vue";
+import { getProducts, createProduct, updateProduct, deleteProduct } from "../services/productService";
 
 export default {
-  name: 'ProductView',
+  components: { Navbar, ProductModal, DeleteModal },
   data() {
     return {
       products: [],
-      newProduct: {
-        title: '',
-        price: '',
-        image: ''
-      }
-    }
+      selected: null,
+      newProduct: { name:"",price:"",image:"",category:"",description:"" }
+    };
   },
-  async created() {
-    try {
-      const res = await getProducts()
-      // Filtrar directamente en la carga inicial (sin filtros visibles en el código)
-      this.products = res.data.filter(
-        p =>
-          !p.title.toLowerCase().includes('fjallraven') && // Eliminar el bolso
-          !p.category.toLowerCase().includes('clothing') &&
-          !p.category.toLowerCase().includes('jewelery')
-      )
-    } catch (error) {
-      console.error('Error al cargar productos:', error)
-    }
-  },
+  async created() { this.load(); },
   methods: {
-    async addNewProduct() {
-      if (!this.newProduct.title || !this.newProduct.price || !this.newProduct.image) {
-        alert('Por favor completa todos los campos.')
-        return
-      }
-
-      try {
-        const res = await addProduct(this.newProduct)
-        const nuevo = { ...res.data, id: Date.now() }
-        this.products.push(nuevo)
-        alert(`Producto agregado (simulación): ${nuevo.title}`)
-        this.newProduct = { title: '', price: '', image: '' }
-      } catch (error) {
-        console.error('Error al agregar producto:', error)
-      }
+    async load() {
+      this.products = (await getProducts()).data;
     },
-    editProduct(product) {
-      alert(`Simulación de edición del producto: ${product.title}`)
+    async crear() {
+      await createProduct(this.newProduct);
+      this.newProduct = { name:"", price:"", image:"", category:"", description:"" };
+      this.load();
     },
-    deleteProduct(product) {
-      if (confirm(`¿Seguro que deseas eliminar "${product.title}"?`)) {
-        this.products = this.products.filter(p => p.id !== product.id)
-        alert(`Producto eliminado (simulación): ${product.title}`)
-      }
+    editar(prod) {
+      this.selected = prod;
+      this.$refs.modal.open(prod);
+    },
+    async guardarEdicion(data) {
+      await updateProduct(this.selected.id, data);
+      this.load();
+    },
+    eliminar(prod) {
+      this.selected = prod;
+      this.$refs.deleteModal.open();
+    },
+    async confirmarEliminacion() {
+      await deleteProduct(this.selected.id);
+      this.load();
     }
   }
-}
+};
 </script>
-
-<style scoped>
-.card {
-  border-radius: 10px;
-}
-.card img {
-  transition: transform 0.2s ease;
-}
-.card img:hover {
-  transform: scale(1.05);
-}
-</style>
 
 
 
